@@ -2,17 +2,21 @@ const express = require("express");
 const app = express();
 const http = require("http");
 const server = http.createServer(app);
-app.use(express.static(__dirname + "/public"));
 const { Server } = require("socket.io");
 const io = new Server(server);
+
+app.set("view engine", "ejs");
+app.use(express.static(__dirname + "/public"));
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/public/index.html");
+  res.render("index");
 });
 
 io.on("connection", (socket) => {
-  socket.on("user_msg", (msg) => {
-    io.emit("msgs", msg);
-    console.log("Client message is:", msg);
+  socket.on("locations", (data) => {
+    io.emit("receive_location", { id: socket.id, ...data });
+  });
+  socket.on("disconnect", function () {
+    io.emit("user_disconnect", socket.id);
   });
 });
 
